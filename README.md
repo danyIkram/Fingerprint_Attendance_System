@@ -23,6 +23,7 @@ This project enables real-time tracking of student/employee attendance via finge
 
 ## 📂 Project Structure
 ├── arduino_code/ # Arduino code
+
 ├── python-app/ # Python code with PySerial + DB connection
 
 Developed as part of a project in Big Data & IoT Master.
