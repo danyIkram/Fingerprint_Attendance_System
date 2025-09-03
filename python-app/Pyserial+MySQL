@@ -1,0 +1,85 @@
+pip install pyserial mysql-connector-python
+
+import serial
+import mysql.connector
+from datetime import datetime
+
+# Configuration du port série (Bluetooth)
+BT_PORT = 'COM3'  
+BT_BAUDRATE = 9600
+
+# Connexion à MySQL
+db = mysql.connector.connect(
+    host="localhost",
+    user="root", 
+    password="", 
+    database="empreintes" 
+)
+
+cursor = db.cursor()
+
+def ajouter_etudiant_si_nouveau(id_student):
+    cursor.execute("SELECT COUNT(*) FROM student WHERE id_student = %s", (id_student,))
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO student (id_student) VALUES (%s)", (id_student,))
+        db.commit()
+        print(f"[INFO] Nouvel étudiant ajouté : {id_student}")
+
+def enregistrer_attendance(id_student, statut):
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    cursor.execute("""
+        INSERT INTO attendance (id_student, datetime, statut)
+        VALUES (%s, %s, %s)
+    """, (id_student, now, statut))
+    db.commit()
+    print(f"[INFO] Enregistrement : {statut} - Étudiant #{id_student} à {now}")
+
+def traiter_message(message):
+    message = message.strip()
+    print(f"[REÇU] {message}")
+    if message.startswith("ENROLL:ID="):
+        id_student = int(message.replace("ENROLL:ID=", ""))
+        ajouter_etudiant_si_nouveau(id_student)
+        enregistrer_attendance(id_student, "enrolled")
+    elif message.startswith("FOUND:ID="):
+        id_student = int(message.replace("FOUND:ID=", ""))
+        ajouter_etudiant_si_nouveau(id_student)
+        enregistrer_attendance(id_student, "present")
+    elif message.startswith("EMPTY_DB"):
+        print("[INFO] La base d'empreintes a été vidée (Arduino).")
+
+# Connexion au port Bluetooth
+try:
+    print(f"[INFO] Connexion au port {BT_PORT}...")
+    ser = serial.Serial(BT_PORT, BT_BAUDRATE, timeout=1)
+    print("[INFO] Connecté au module Bluetooth.")
+except Exception as e:
+    print(f"[ERREUR] Impossible de se connecter : {e}")
+    exit()
+
+# Boucle de lecture
+try:
+    while True:
+        if ser.in_waiting:
+            ligne = ser.readline().decode('utf-8').strip()
+            if ligne:
+                traiter_message(ligne)
+except KeyboardInterrupt:
+    print("\n[INFO] Arrêt manuel.")
+finally:
+    ser.close()
+    cursor.close()
+    db.close()
+
+
+CREATE TABLE student (
+    id_student INT PRIMARY KEY
+);
+
+CREATE TABLE attendance (
+    id_record INT AUTO_INCREMENT PRIMARY KEY,
+    id_student INT,
+    datetime DATETIME,
+    statut VARCHAR(20),
+    FOREIGN KEY (id_student) REFERENCES student(id_student)
+);
