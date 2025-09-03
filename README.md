@@ -26,6 +26,8 @@ This project enables real-time tracking of student/employee attendance via finge
 
 ├── python-app/ # Python code with PySerial + DB connection
 
+---
+
 ## Future Improvements
 
 Web dashboard for admins
@@ -33,5 +35,7 @@ Web dashboard for admins
 Cloud storage integration
 
 Advanced analytics on attendance
+
+---
 
 Developed as part of a project in Big Data & IoT Master.
