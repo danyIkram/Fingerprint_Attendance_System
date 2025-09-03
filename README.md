@@ -38,4 +38,9 @@ Advanced analytics on attendance
 
 ---
 
+##  Demo Video
+[Click here to download and watch the demo](docs/demo.mp4)
+
+---
+
 Developed as part of a project in Big Data & IoT Master.
